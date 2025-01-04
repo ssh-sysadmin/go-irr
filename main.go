@@ -77,9 +77,9 @@ func getPrefixListFromCache(c *gin.Context) {
 	isASN, _ := regexp.MatchString("^AS\\d{1,6}$", asnOrAsSet)
 	isLegacyAsSet, _ := regexp.MatchString("^AS-[a-zA-Z0-9]{1,32}$", asnOrAsSet)
 	isModernAsSet, _ := regexp.MatchString("^AS\\d{1,6}:AS-[a-zA-Z0-9]{1,32}$", asnOrAsSet)
-	isAristaAsSet, _ := regexp.MatchString("^AS\\d{1,6}_AS-[a-zA-Z0-9]{1,32}$", asnOrAsSet)
+	isEosAsSet, _ := regexp.MatchString("^AS\\d{1,6}_AS-[a-zA-Z0-9]{1,32}$", asnOrAsSet)
 
-	if !isASN && !isLegacyAsSet && !isModernAsSet && !isAristaAsSet {
+	if !isASN && !isLegacyAsSet && !isModernAsSet && !isEosAsSet {
 		c.String(400, "Bad request")
 		return
 	}
@@ -105,7 +105,7 @@ func getPrefixListFromCache(c *gin.Context) {
 		return
 	}
 
-	output := getPrefixList(addressFamily, routerOs, asnOrAsSet, isAristaAsSet)
+	output := getPrefixList(addressFamily, routerOs, asnOrAsSet, isEosAsSet)
 
 	if output == "" {
 		c.String(500, "Internal server error")
@@ -134,24 +134,24 @@ func getPrefixListFromCache(c *gin.Context) {
 	c.String(200, output)
 }
 
-func getPrefixList(addressFamily string, routerOs string, asnOrAsSet string, isAristaAsSet bool) string {
+func getPrefixList(addressFamily string, routerOs string, asnOrAsSet string, isEosAsSet bool) string {
 
-	if isAristaAsSet {
+	if isEosAsSet {
 		asnOrAsSet = strings.ReplaceAll(asnOrAsSet, "_", ":")
 	}
 
-	aggregate := "-3"
+	aggregate := "-A"
+	maxLen := "-m 24"
 
-	if routerOs != "J" {
-		aggregate = "-A"
+	if routerOs == "J" {
+		aggregate = "-3"
 	}
 
-	maxLen := "-m 24"
 	if addressFamily == "6" {
 		maxLen = "-m 48"
 	}
 
-	cmd := exec.Command("bgpq4", "-SAFRINIC,APNIC,ARIN,LACNIC,RIPE" ,aggregate, maxLen, "-"+addressFamily, "-"+routerOs, asnOrAsSet)
+	cmd := exec.Command("bgpq4", "-SAFRINIC,APNIC,ARIN,LACNIC,RIPE", aggregate, maxLen, "-"+addressFamily, "-"+routerOs, asnOrAsSet)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
