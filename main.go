@@ -55,9 +55,9 @@ func getPrefixListFromCache(c *gin.Context) {
 		return
 	}
 
-	routerOs := supportedVendors[path[1]]
-	addressFamily := supportedAddressFamilies[path[2]]
-	asnOrAsSet := strings.Split(path[3], "?")[0]
+	routerOs := supportedVendors[strings.ToLower(path[1])]
+	addressFamily := supportedAddressFamilies[strings.ToLower(path[2])]
+	asnOrAsSet := strings.ToUpper(strings.Split(path[3], "?")[0])
 	nameParam := strings.Split(path[3], "?") // Optional
 
 	prefixListName := "NN"
@@ -75,11 +75,10 @@ func getPrefixListFromCache(c *gin.Context) {
 	// AS\d{1,5} or AS-SET
 
 	isASN, _ := regexp.MatchString("^AS\\d{1,6}$", asnOrAsSet)
-	isLegacyAsSet, _ := regexp.MatchString("^AS-[a-zA-Z0-9]{1,32}$", asnOrAsSet)
-	isModernAsSet, _ := regexp.MatchString("^AS\\d{1,6}:AS-[a-zA-Z0-9]{1,32}$", asnOrAsSet)
-	isEosAsSet, _ := regexp.MatchString("^AS\\d{1,6}_AS-[a-zA-Z0-9]{1,32}$", asnOrAsSet)
+	isAsSet, _ := regexp.MatchString("^AS[A-Z0-9:-]{1,48}$", asnOrAsSet)
+	isEosAsSet, _ := regexp.MatchString("^AS[A-Z0-9_-]{1,48}$", asnOrAsSet)
 
-	if !isASN && !isLegacyAsSet && !isModernAsSet && !isEosAsSet {
+	if !isASN && !isAsSet && !isEosAsSet {
 		c.String(400, "Bad request")
 		return
 	}
