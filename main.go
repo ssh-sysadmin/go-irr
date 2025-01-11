@@ -128,6 +128,11 @@ func getPrefixListFromCache(c *gin.Context) {
 	if path[1] == "eos" {
 		lines := strings.Split(output, "\n")
 		output = strings.Join(lines[2:], "\n")
+
+		if strings.Contains(output, "deny") {
+			lines := strings.Split(output, "\n")
+			output = strings.Join(lines[1:], "\n")
+		}
 	}
 
 	c.String(200, output)
