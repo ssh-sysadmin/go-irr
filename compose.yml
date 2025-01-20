@@ -5,3 +5,4 @@ services:
             - '8080:8080'
         environment:
             - GIN_MODE=release
+            - SOURCES=AFRINIC,APNIC,ARIN,LACNIC,RIPE

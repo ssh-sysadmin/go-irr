@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -12,7 +13,12 @@ import (
 
 var cache map[string]map[string]map[string]string
 
+var sources = "AFRINIC,APNIC,ARIN,LACNIC,RIPE"
+
 func init() {
+	if os.Getenv("SOURCES") != "" {
+		sources = os.Getenv("SOURCES")
+	}
 	cache = make(map[string]map[string]map[string]string)
 	go purgeCache()
 }
@@ -154,8 +160,7 @@ func getPrefixList(addressFamily string, routerOs string, asnOrAsSet string, isE
 	if addressFamily == "6" {
 		maxLen = "-m 48"
 	}
-
-	cmd := exec.Command("bgpq4", "-SAFRINIC,APNIC,ARIN,LACNIC,RIPE", aggregate, maxLen, "-"+addressFamily, "-"+routerOs, asnOrAsSet)
+	cmd := exec.Command("bgpq4", "-S"+sources, aggregate, maxLen, "-"+addressFamily, "-"+routerOs, asnOrAsSet)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
