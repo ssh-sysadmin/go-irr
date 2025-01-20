@@ -9,6 +9,10 @@ GET /routeros/addressfamily/ASorAS-SET
 GET /routeros/addressfamily/ASorAS-SET?name=myprefixlist
 ```
 
+## Config
+
+SOURCES = What gets passed to the -S field in bgpq4, default is AFRINIC,APNIC,ARIN,LACNIC,RIPE
+
 ### Examples:
 
 ```
