@@ -34,6 +34,18 @@ func purgeCache() {
 	}
 }
 
+func stripHeadersForEos(prefixList string) string {
+	lines := strings.Split(prefixList, "\n")
+	output := strings.Join(lines[2:], "\n")
+
+	if strings.Contains(output, "deny") {
+		lines := strings.Split(output, "\n")
+		output = strings.Join(lines[1:], "\n")
+	}
+
+	return output
+}
+
 func getPrefixListFromCache(c *gin.Context) {
 	supportedVendors := map[string]string{
 		"arista":    "e",
@@ -102,8 +114,7 @@ func getPrefixListFromCache(c *gin.Context) {
 		}
 
 		if path[1] == "eos" {
-			lines := strings.Split(cacheData, "\n")
-			cacheData = strings.Join(lines[2:], "\n")
+			cacheData = stripHeadersForEos(cacheData)
 		}
 
 		c.String(200, cacheData)
@@ -132,13 +143,7 @@ func getPrefixListFromCache(c *gin.Context) {
 	}
 
 	if path[1] == "eos" {
-		lines := strings.Split(output, "\n")
-		output = strings.Join(lines[2:], "\n")
-
-		if strings.Contains(output, "deny") {
-			lines := strings.Split(output, "\n")
-			output = strings.Join(lines[1:], "\n")
-		}
+		output = stripHeadersForEos(output)
 	}
 
 	c.String(200, output)
