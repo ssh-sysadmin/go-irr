@@ -14,10 +14,14 @@ import (
 var cache map[string]map[string]map[string]string
 
 var sources = "AFRINIC,APNIC,ARIN,LACNIC,RIPE"
+var matchParent = true
 
 func init() {
 	if os.Getenv("SOURCES") != "" {
 		sources = os.Getenv("SOURCES")
+	}
+	if os.Getenv("MATCH_PARENT") != "" {
+		matchParent, _ = regexp.MatchString("true|1|y(es)?", os.Getenv("MATCH_PARENT"))
 	}
 	cache = make(map[string]map[string]map[string]string)
 	go purgeCache()
@@ -155,17 +159,27 @@ func getPrefixList(addressFamily string, routerOs string, asnOrAsSet string, isE
 		asnOrAsSet = strings.ReplaceAll(asnOrAsSet, "_", ":")
 	}
 
-	aggregate := "-A"
-	maxLen := "-m 24"
+	var args []string
+
+	args = append(args, "-S"+sources, "-"+addressFamily, "-"+routerOs)
 
 	if routerOs == "J" {
-		aggregate = "-3"
+		args = append(args, "-3")
+	} else {
+		args = append(args, "-A")
 	}
 
+	maxLen := "24"
 	if addressFamily == "6" {
-		maxLen = "-m 48"
+		maxLen = "48"
 	}
-	cmd := exec.Command("bgpq4", "-S"+sources, aggregate, maxLen, "-"+addressFamily, "-"+routerOs, asnOrAsSet)
+	args = append(args, "-m "+maxLen)
+	if matchParent {
+		args = append(args, "-R "+maxLen)
+	}
+
+	args = append(args, asnOrAsSet)
+	cmd := exec.Command("bgpq4", args...)
 
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout = &stdout
