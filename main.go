@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bytes"
-	"os/exec"
 	"regexp"
 	"strings"
 	"time"
@@ -32,21 +30,7 @@ func stripHeadersForEos(prefixList string) string {
 	return output
 }
 
-func getPrefixListFromCache(c *gin.Context) {
-	supportedVendors := map[string]string{
-		"arista":    "e",
-		"eos":       "e",
-		"juniper":   "J",
-		"bird":      "b",
-		"routeros6": "K",
-		"routeros7": "K7",
-	}
-
-	supportedAddressFamilies := map[string]string{
-		"v4": "4",
-		"v6": "6",
-	}
-
+func handle(c *gin.Context) {
 	path := strings.Split(c.Request.URL.String(), "/")
 
 	c.Header("Content-Type", "text/plain")
@@ -59,8 +43,8 @@ func getPrefixListFromCache(c *gin.Context) {
 		return
 	}
 
-	routerOs := supportedVendors[strings.ToLower(path[1])]
-	addressFamily := supportedAddressFamilies[strings.ToLower(path[2])]
+	routerOs := vendorShorthand(path[1])
+	addressFamily := addrFamilyShorthand(path[2])
 	asnOrAsSet := strings.ToUpper(strings.Split(path[3], "?")[0])
 	nameParam := strings.Split(path[3], "?") // Optional
 
@@ -107,7 +91,7 @@ func getPrefixListFromCache(c *gin.Context) {
 		return
 	}
 
-	output := getPrefixList(addressFamily, routerOs, asnOrAsSet, isEosAsSet)
+	output := queryBgpq4(addressFamily, routerOs, asnOrAsSet, isEosAsSet)
 
 	if output == "" {
 		c.String(500, "Internal server error")
@@ -127,48 +111,9 @@ func getPrefixListFromCache(c *gin.Context) {
 	c.String(200, output)
 }
 
-func getPrefixList(addressFamily string, routerOs string, asnOrAsSet string, isEosAsSet bool) string {
-	if isEosAsSet {
-		asnOrAsSet = strings.ReplaceAll(asnOrAsSet, "_", ":")
-	}
-
-	var args []string
-
-	args = append(args, "-S"+strings.Join(conf.sources, ","), "-"+addressFamily, "-"+routerOs)
-
-	if routerOs == "J" {
-		args = append(args, "-3")
-	} else {
-		args = append(args, "-A")
-	}
-
-	maxLen := "24"
-	if addressFamily == "6" {
-		maxLen = "48"
-	}
-	args = append(args, "-m "+maxLen)
-	if conf.matchParent {
-		args = append(args, "-R "+maxLen)
-	}
-
-	args = append(args, asnOrAsSet)
-	cmd := exec.Command("bgpq4", args...)
-
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-
-	if err != nil {
-		return ""
-	}
-
-	return stdout.String()
-}
-
 func main() {
 	router := gin.Default()
-	router.NoRoute(getPrefixListFromCache)
+	router.NoRoute(handle)
 
 	router.Run(conf.listen)
 }
