@@ -25,15 +25,6 @@ func loadConfig(cfg *config) {
 	cfg.listen = fetchEnv("LISTEN", "[::]:8080")
 }
 
-func fetchEnv(key string, defaultValue string) string {
-	value, found := os.LookupEnv(key)
-	if found {
-		return value
-	} else {
-		return defaultValue
-	}
-}
-
 type envParser[T any] func(string) T
 
 func parseEnv[T any](key string, defaultValue T, parse envParser[T]) T {
@@ -43,4 +34,8 @@ func parseEnv[T any](key string, defaultValue T, parse envParser[T]) T {
 	} else {
 		return defaultValue
 	}
+}
+
+func fetchEnv(key string, defaultValue string) string {
+	return parseEnv(key, defaultValue, func(s string) string { return s })
 }
