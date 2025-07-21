@@ -4,12 +4,14 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 )
 
 type config struct {
 	sources     []string
 	matchParent bool
 	listen      string
+	cacheTime   time.Duration
 }
 
 func loadConfig(cfg *config) {
@@ -23,6 +25,12 @@ func loadConfig(cfg *config) {
 	})
 
 	cfg.listen = fetchEnv("LISTEN", "[::]:8080")
+
+	cfg.cacheTime = parseEnv("CACHE_TIME", time.Hour, func(s string) time.Duration {
+		d, _ := time.ParseDuration(s)
+		return d
+	})
+
 }
 
 type envParser[T any] func(string) T

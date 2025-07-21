@@ -3,7 +3,6 @@ package main
 import (
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,7 +13,7 @@ var conf config
 func init() {
 	cache.init()
 	loadConfig(&conf)
-	go cache.purgeEvery(time.Hour)
+	go cache.purgeEvery(conf.cacheTime)
 }
 
 func main() {
