@@ -1,0 +1,13 @@
+services:
+    go-irr:
+        build: .
+        image: ""
+        ports:
+            - '8080:8080'
+        environment:
+            - GIN_MODE=debug
+        develop:
+            watch:
+                - path: .
+                  include: "*.go"
+                  action: rebuild
