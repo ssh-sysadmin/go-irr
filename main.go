@@ -10,21 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var cache map[string]map[string]map[string]string
+var cache prefixCache
 var conf config
 
 func init() {
-	cache = make(map[string]map[string]map[string]string)
+	cache.init()
 	loadConfig(&conf)
-	go purgeCache()
-}
-
-func purgeCache() {
-	ticker := time.NewTicker(time.Hour)
-	for {
-		<-ticker.C
-		cache = make(map[string]map[string]map[string]string)
-	}
+	go cache.purgeEvery(time.Hour)
 }
 
 func skipLines(s string, n int) string {
@@ -100,7 +92,7 @@ func getPrefixListFromCache(c *gin.Context) {
 	//	- If it is not, call getPrefixList and store the result in the cache
 	//	- Return the result
 
-	cacheData := cache[routerOs][addressFamily][asnOrAsSet]
+	cacheData := cache.get(routerOs, addressFamily, asnOrAsSet)
 
 	if cacheData != "" {
 		if prefixListName != "" {
@@ -122,15 +114,7 @@ func getPrefixListFromCache(c *gin.Context) {
 		return
 	}
 
-	if cache[routerOs] == nil {
-		cache[routerOs] = make(map[string]map[string]string)
-	}
-
-	if cache[routerOs][addressFamily] == nil {
-		cache[routerOs][addressFamily] = make(map[string]string)
-	}
-
-	cache[routerOs][addressFamily][asnOrAsSet] = output
+	cache.set(routerOs, addressFamily, asnOrAsSet, output)
 
 	if prefixListName != "" {
 		output = strings.ReplaceAll(output, "NN", prefixListName)
