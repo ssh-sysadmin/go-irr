@@ -19,6 +19,11 @@ func init() {
 
 func main() {
 	router := gin.Default()
+
+	router.GET("/health", func(c *gin.Context) {
+		c.String(200, "OK")
+	})
+
 	router.NoRoute(handle)
 
 	router.Run(conf.listen)
