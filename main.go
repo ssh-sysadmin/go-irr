@@ -30,11 +30,8 @@ func init() {
 func purgeCache() {
 	ticker := time.NewTicker(time.Hour)
 	for {
-		select {
-		case <-ticker.C:
-			// Purge the cache here
-			cache = make(map[string]map[string]map[string]string)
-		}
+		<-ticker.C
+		cache = make(map[string]map[string]map[string]string)
 	}
 }
 
