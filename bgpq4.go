@@ -15,29 +15,20 @@ var vendorShorthands = map[string]string{
 	"routeros7": "K7",
 }
 
-func vendorShorthand(s string) string {
-	return vendorShorthands[strings.ToLower(s)]
-}
-
 var addrFamilyShorthands = map[string]string{
 	"v4": "4",
 	"v6": "6",
 }
 
-func addrFamilyShorthand(s string) string {
-	return addrFamilyShorthands[strings.ToLower(s)]
-}
-
-func queryBgpq4(addrFamily string, routerOs string, asnOrAsSet string, isEosAsSet bool) string {
-	if isEosAsSet {
-		asnOrAsSet = strings.ReplaceAll(asnOrAsSet, "_", ":")
-	}
-
+func queryBgpq4(vendorName string, addrFamily string, asnOrAsSet string) string {
 	var args []string
 
-	args = append(args, "-S"+strings.Join(conf.sources, ","), "-"+addrFamily, "-"+routerOs)
+	vendor := vendorShorthands[strings.ToLower(vendorName)]
+	addrFamily = addrFamilyShorthands[strings.ToLower(addrFamily)]
 
-	if routerOs == "J" {
+	args = append(args, "-S"+strings.Join(conf.sources, ","), "-"+addrFamily, "-"+vendor)
+
+	if vendor == "J" {
 		args = append(args, "-3")
 	} else {
 		args = append(args, "-A")
@@ -64,5 +55,25 @@ func queryBgpq4(addrFamily string, routerOs string, asnOrAsSet string, isEosAsSe
 		return ""
 	}
 
-	return stdout.String()
+	output := stdout.String()
+
+	if vendorName == "eos" {
+		output = stripHeadersForEos(output)
+	}
+
+	return output
+}
+
+func stripHeadersForEos(prefixList string) string {
+	output := skipLines(prefixList, 2)
+
+	if strings.Contains(output, "deny") {
+		output = skipLines(prefixList, 1)
+	}
+
+	return output
+}
+
+func skipLines(s string, n int) string {
+	return strings.SplitN(s, "\n", n+1)[n]
 }

@@ -18,18 +18,18 @@ func (c *prefixCache) purgeEvery(t time.Duration) {
 	}
 }
 
-func (c prefixCache) get(routerOs string, addrFamily string, asnOrAsSet string) string {
-	return c.data[routerOs][addrFamily][asnOrAsSet]
+func (c prefixCache) get(vendor string, addrFamily string, asnOrAsSet string) string {
+	return c.data[vendor][addrFamily][asnOrAsSet]
 }
 
-func (c *prefixCache) set(routerOs string, addrFamily string, asnOrAsSet string, v string) {
-	if c.data[routerOs] == nil {
-		c.data[routerOs] = make(map[string]map[string]string)
+func (c *prefixCache) set(vendor string, addrFamily string, asnOrAsSet string, v string) {
+	if c.data[vendor] == nil {
+		c.data[vendor] = make(map[string]map[string]string)
 	}
 
-	if c.data[routerOs][addrFamily] == nil {
-		c.data[routerOs][addrFamily] = make(map[string]string)
+	if c.data[vendor][addrFamily] == nil {
+		c.data[vendor][addrFamily] = make(map[string]string)
 	}
 
-	c.data[routerOs][addrFamily][asnOrAsSet] = v
+	c.data[vendor][addrFamily][asnOrAsSet] = v
 }
