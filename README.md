@@ -12,6 +12,8 @@ GET /routeros/addressfamily/ASorAS-SET?name=myprefixlist
 ## Config
 
 SOURCES = What gets passed to the -S field in bgpq4, default is AFRINIC,APNIC,ARIN,LACNIC,RIPE
+MATCH_PARENT = If bgpq4 should match parent prefixes, not just the exact route object (enabled by default)
+LISTEN = What go-irr should listen to (default [::]:8080)
 
 ### Examples:
 
