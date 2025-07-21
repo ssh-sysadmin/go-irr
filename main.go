@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"os"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -12,18 +11,11 @@ import (
 )
 
 var cache map[string]map[string]map[string]string
-
-var sources = "AFRINIC,APNIC,ARIN,LACNIC,RIPE"
-var matchParent = true
+var conf config
 
 func init() {
-	if os.Getenv("SOURCES") != "" {
-		sources = os.Getenv("SOURCES")
-	}
-	if os.Getenv("MATCH_PARENT") != "" {
-		matchParent, _ = regexp.MatchString("true|1|y(es)?", os.Getenv("MATCH_PARENT"))
-	}
 	cache = make(map[string]map[string]map[string]string)
+	loadConfig(&conf)
 	go purgeCache()
 }
 
@@ -151,14 +143,13 @@ func getPrefixListFromCache(c *gin.Context) {
 }
 
 func getPrefixList(addressFamily string, routerOs string, asnOrAsSet string, isEosAsSet bool) string {
-
 	if isEosAsSet {
 		asnOrAsSet = strings.ReplaceAll(asnOrAsSet, "_", ":")
 	}
 
 	var args []string
 
-	args = append(args, "-S"+sources, "-"+addressFamily, "-"+routerOs)
+	args = append(args, "-S"+strings.Join(conf.sources, ","), "-"+addressFamily, "-"+routerOs)
 
 	if routerOs == "J" {
 		args = append(args, "-3")
@@ -171,7 +162,7 @@ func getPrefixList(addressFamily string, routerOs string, asnOrAsSet string, isE
 		maxLen = "48"
 	}
 	args = append(args, "-m "+maxLen)
-	if matchParent {
+	if conf.matchParent {
 		args = append(args, "-R "+maxLen)
 	}
 
@@ -191,9 +182,8 @@ func getPrefixList(addressFamily string, routerOs string, asnOrAsSet string, isE
 }
 
 func main() {
-
 	router := gin.Default()
 	router.NoRoute(getPrefixListFromCache)
 
-	router.Run("[::]:8080")
+	router.Run(conf.listen)
 }
