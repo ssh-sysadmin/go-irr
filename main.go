@@ -27,13 +27,14 @@ func purgeCache() {
 	}
 }
 
+func skipLines(s string, n int) string {
+	return strings.SplitN(s, "\n", n+1)[n]
+}
 func stripHeadersForEos(prefixList string) string {
-	lines := strings.Split(prefixList, "\n")
-	output := strings.Join(lines[2:], "\n")
+	output := skipLines(prefixList, 2)
 
 	if strings.Contains(output, "deny") {
-		lines := strings.Split(output, "\n")
-		output = strings.Join(lines[1:], "\n")
+		output = skipLines(prefixList, 1)
 	}
 
 	return output
