@@ -1,10 +1,10 @@
 package main
 
 import (
+	"log"
+	"net/http"
 	"regexp"
 	"strings"
-
-	"github.com/gin-gonic/gin"
 )
 
 var cache prefixCache
@@ -17,37 +17,38 @@ func init() {
 }
 
 func main() {
-	router := gin.Default()
+	http.HandleFunc("/", handle)
 
-	router.GET("/health", func(c *gin.Context) {
-		c.String(200, "OK")
-	})
+	http.HandleFunc("/health", handleHealthcheck)
 
-	router.NoRoute(handle)
+	log.Fatal(http.ListenAndServe(conf.listen, nil))
 
-	router.Run(conf.listen)
 }
 
-func handle(c *gin.Context) {
-	c.Header("Content-Type", "text/plain")
+func handleHealthcheck(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
+}
 
-	path := strings.Split(c.Request.URL.Path, "/")[1:]
-	q := c.Request.URL.Query()
+func handle(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain")
+
+	path := strings.Split(r.URL.Path, "/")
+	q := r.URL.Query()
 
 	// path has 3 segments:
 	// /vendor/addressfamily/AS1234:AS-SET
-
-	if len(path) != 3 {
-		c.String(404, "Not found")
+	if len(path) != 4 {
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	vendor := path[0]
-	addrFamily := path[1]
-	asnOrAsSet := strings.ReplaceAll(strings.ToUpper(path[2]), "_", ":")
+	vendor := path[1]
+	addrFamily := path[2]
+	asnOrAsSet := strings.ReplaceAll(strings.ToUpper(path[3]), "_", ":")
 
 	if vendor == "" || addrFamily == "" || !strings.HasPrefix((asnOrAsSet), "AS") {
-		c.String(400, "Bad request")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -58,20 +59,19 @@ func handle(c *gin.Context) {
 	isAsSet, _ := regexp.MatchString("^AS[A-Z0-9:-]{1,48}$", asnOrAsSet)
 
 	if !isASN && !isAsSet {
-		c.String(400, "Bad request")
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Check if the prefix list is already cached
 	// If it isn't, look it up using bgpq4 and cache the result
-
 	output := cache.get(vendor, addrFamily, asnOrAsSet)
-
 	if output == "" {
 		output = queryBgpq4(vendor, addrFamily, asnOrAsSet)
 
 		if output == "" {
-			c.String(500, "Internal server error")
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte("Internal Server Error"))
 			return
 		}
 
@@ -82,5 +82,6 @@ func handle(c *gin.Context) {
 		output = strings.ReplaceAll(output, "NN", q.Get("name"))
 	}
 
-	c.String(200, output)
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(output))
 }
