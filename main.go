@@ -1,26 +1,33 @@
 package main
 
 import (
+	"github.com/BurntSushi/toml"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 )
 
 var cache prefixCache
 var conf config
+var pullGenConfig tomlConfig
 
 func init() {
 	cache.init()
 	loadConfig(&conf)
 	go cache.purgeEvery(conf.cacheTime)
+	if _, err := os.Stat(conf.pullGenConfigFile); err == nil {
+		toml.DecodeFile(conf.pullGenConfigFile, &pullGenConfig)
+	}
 }
 
 func main() {
 	http.HandleFunc("/", handle)
 
 	http.HandleFunc("/health", handleHealthcheck)
-
+	http.HandleFunc("/pg/peers/*", pgPeers)
+	http.HandleFunc("/pg/conf/*", pgGenRouterConfig)
 	log.Fatal(http.ListenAndServe(conf.listen, nil))
 
 }

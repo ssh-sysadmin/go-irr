@@ -8,10 +8,11 @@ import (
 )
 
 type config struct {
-	sources     []string
-	matchParent bool
-	listen      string
-	cacheTime   time.Duration
+	sources           []string
+	matchParent       bool
+	listen            string
+	cacheTime         time.Duration
+	pullGenConfigFile string
 }
 
 func loadConfig(cfg *config) {
@@ -34,6 +35,8 @@ func loadConfig(cfg *config) {
 		d, _ := time.ParseDuration(s)
 		return d
 	})
+
+	cfg.pullGenConfigFile = fetchEnv("PULLGEN_CONFIG", "config.toml")
 
 }
 
