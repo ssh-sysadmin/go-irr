@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/BurntSushi/toml"
 	"log"
 	"net/http"
@@ -18,7 +19,12 @@ func init() {
 	loadConfig(&conf)
 	go cache.purgeEvery(conf.cacheTime)
 	if _, err := os.Stat(conf.pullGenConfigFile); err == nil {
-		toml.DecodeFile(conf.pullGenConfigFile, &pullGenConfig)
+		_, err := toml.DecodeFile(conf.pullGenConfigFile, &pullGenConfig)
+		if err != nil {
+			log.Fatal("Error loading pull gen config file, but it does exist: ", err)
+		}
+		fmt.Printf("Read in %s successfully\n", conf.pullGenConfigFile)
+
 	}
 }
 
