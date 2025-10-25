@@ -13,7 +13,9 @@ var vendorShorthands = map[string]string{
 	"bird":      "b",
 	"routeros6": "K",
 	"routeros7": "K7",
-	"cisco":     "E",
+	"ios-xr":    "X",
+	"ext-acl":   "E",
+	"cisco":     "",
 	"json":      "j",
 }
 
@@ -28,7 +30,11 @@ func queryBgpq4(vendorName string, addrFamily string, asnOrAsSet string) string 
 	vendor := vendorShorthands[strings.ToLower(vendorName)]
 	addrFamily = addrFamilyShorthands[strings.ToLower(addrFamily)]
 
-	args = append(args, "-S"+strings.Join(conf.sources, ","), "-"+addrFamily, "-"+vendor, "-A")
+	args = append(args, "-S"+strings.Join(conf.sources, ","), "-"+addrFamily, "-A")
+
+	if vendor != "" {
+		args = append(args, "-"+vendor)
+	}
 
 	if vendor == "J" {
 		args = append(args, "-E")

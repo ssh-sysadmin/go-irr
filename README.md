@@ -36,6 +36,10 @@ GET /eos/v4/AS208453_AS-CUST
 /bird/
 /routeros6/
 /routeros7/
+/ios-xr/
+/ext-acl/ # generate extended access-list
+/cisco/
+/json/
 ```
 
 ## Supported address families
