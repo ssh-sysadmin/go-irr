@@ -13,6 +13,8 @@ var vendorShorthands = map[string]string{
 	"bird":      "b",
 	"routeros6": "K",
 	"routeros7": "K7",
+	"cisco":     "E",
+	"json":      "j",
 }
 
 var addrFamilyShorthands = map[string]string{
