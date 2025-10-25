@@ -49,14 +49,18 @@ func getSourceIP(r *http.Request) string {
 // loggingMiddleware logs status code, source IP and request path for each request
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// capture start time, then serve the request and measure elapsed time
+		start := time.Now()
 		lrw := &loggingResponseWriter{ResponseWriter: w}
 		next.ServeHTTP(lrw, r)
+		elapsed := time.Since(start)
 
 		status := lrw.status
 		if status == 0 {
 			status = http.StatusOK
 		}
 		src := getSourceIP(r)
-		fmt.Printf("%s status=%d src=%s path=%s\n", time.Now().Format(time.RFC3339), status, src, r.URL.Path)
+		// log timestamp, status, source IP, path and request duration
+		fmt.Printf("%s status=%d src=%s path=%s duration=%s\n", time.Now().Format(time.RFC3339), status, src, r.URL.Path, elapsed)
 	})
 }
