@@ -20,14 +20,28 @@ func main() {
 	http.HandleFunc("/", handle)
 
 	http.HandleFunc("/health", handleHealthcheck)
+	http.HandleFunc("/clearCache", handleCacheClear)
 
-	log.Fatal(http.ListenAndServe(conf.listen, nil))
+	// Wrap the default mux with logging middleware so all requests are logged
+	handler := loggingMiddleware(http.DefaultServeMux)
+	log.Fatal(http.ListenAndServe(conf.listen, handler))
 
 }
 
 func handleHealthcheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
+}
+
+func handleCacheClear(w http.ResponseWriter, r *http.Request) {
+	if !conf.allowCacheClear {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	cache.init()
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Cache cleared"))
 }
 
 func handle(w http.ResponseWriter, r *http.Request) {
@@ -40,6 +54,12 @@ func handle(w http.ResponseWriter, r *http.Request) {
 	// /vendor/addressfamily/AS1234:AS-SET
 	if len(path) != 4 {
 		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// Check if cache bypass is allowed
+	if !conf.allowCacheBypass && q.Get("bypassCache") != "" {
+		w.WriteHeader(http.StatusForbidden)
 		return
 	}
 
@@ -65,8 +85,10 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the prefix list is already cached
 	// If it isn't, look it up using bgpq4 and cache the result
+	// Optional cache bypass
 	output := cache.get(vendor, addrFamily, asnOrAsSet)
-	if output == "" {
+
+	if output == "" || q.Get("bypassCache") == "1" || q.Get("bypassCache") == "true" {
 		output = queryBgpq4(vendor, addrFamily, asnOrAsSet)
 
 		if output == "" {

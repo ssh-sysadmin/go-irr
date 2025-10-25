@@ -11,10 +11,12 @@ GET /routeros/addressfamily/ASorAS-SET?name=myprefixlist
 
 ## Config
 
-SOURCES = What gets passed to the -S field in bgpq4, default is AFRINIC,APNIC,ARIN,LACNIC,RIPE
+SOURCES = What gets passed to the -S field in bgpq4, default is NTTCOM,INTERNAL,LACNIC,RADB,RIPE,RIPE-NONAUTH,ALTDB,BELL,LEVEL3,APNIC,JPIRR,ARIN,BBOI,TC,AFRINIC,IDNIC,RPKI,REGISTROBR,CANARIE
 MATCH_PARENT = If bgpq4 should match parent prefixes, not just the exact route object (enabled by default)
 LISTEN = What go-irr should listen to (default [::]:8080)
 CACHE_TIME = How long go-irr should cache prefixes for (default 1 hour)
+ALLOW_CACHE_BYPASS = If the "bypassCache" query parameter is allowed
+ALLOW_CACHE_CLEAR = If global cache is allowed to be cleared with a request to /clearCache
 
 ### Examples:
 
@@ -36,6 +38,10 @@ GET /eos/v4/AS208453_AS-CUST
 /bird/
 /routeros6/
 /routeros7/
+/ios-xr/
+/ext-acl/ # generate extended access-list
+/cisco/
+/json/
 ```
 
 ## Supported address families
