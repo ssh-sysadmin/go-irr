@@ -13,6 +13,10 @@ var vendorShorthands = map[string]string{
 	"bird":      "b",
 	"routeros6": "K",
 	"routeros7": "K7",
+	"ios-xr":    "X",
+	"ext-acl":   "E",
+	"cisco":     "",
+	"json":      "j",
 }
 
 var addrFamilyShorthands = map[string]string{
@@ -26,12 +30,16 @@ func queryBgpq4(vendorName string, addrFamily string, asnOrAsSet string) string 
 	vendor := vendorShorthands[strings.ToLower(vendorName)]
 	addrFamily = addrFamilyShorthands[strings.ToLower(addrFamily)]
 
-	args = append(args, "-S"+strings.Join(conf.sources, ","), "-"+addrFamily, "-"+vendor)
+	args = append(args, "-S"+strings.Join(conf.sources, ","), "-"+addrFamily, "-A")
+
+	if vendor != "" {
+		args = append(args, "-"+vendor)
+	}
 
 	if vendor == "J" {
-		args = append(args, "-3")
-	} else {
-		args = append(args, "-A")
+		args = append(args, "-E")
+		//bgpq4 needs to make a policy of route-filters instead of a prefix-list
+		//because junos prefix-lists do not support le X for aggregation
 	}
 
 	maxLen := "24"

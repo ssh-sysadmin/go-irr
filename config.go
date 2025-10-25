@@ -4,18 +4,26 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 )
 
 type config struct {
-	sources     []string
-	matchParent bool
-	listen      string
+	sources          []string
+	matchParent      bool
+	listen           string
+	cacheTime        time.Duration
+	allowCacheBypass bool
+	allowCacheClear  bool
 }
 
 func loadConfig(cfg *config) {
-	cfg.sources = parseEnv("SOURCES", []string{"AFRINIC", "APNIC", "ARIN", "LACNIC", "RIPE"}, func(s string) []string {
-		return strings.Split(strings.ReplaceAll(s, ", ", ","), ",")
-	})
+	cfg.sources = parseEnv("SOURCES",
+		//default - added anything and everything relevant, whittle it down with an envvar if you want less /shruggi
+		[]string{"NTTCOM", "INTERNAL", "LACNIC", "RADB", "RIPE", "RIPE-NONAUTH", "ALTDB", "BELL", "LEVEL3", "APNIC", "JPIRR", "ARIN", "BBOI", "TC", "AFRINIC", "IDNIC", "RPKI", "REGISTROBR", "CANARIE"},
+		//parse custom env
+		func(s string) []string {
+			return strings.Split(strings.ReplaceAll(s, ", ", ","), ",")
+		})
 
 	cfg.matchParent = parseEnv("MATCH_PARENT", true, func(s string) bool {
 		matched, _ := regexp.MatchString("true|1|y(es)?", s)
@@ -23,15 +31,22 @@ func loadConfig(cfg *config) {
 	})
 
 	cfg.listen = fetchEnv("LISTEN", "[::]:8080")
-}
 
-func fetchEnv(key string, defaultValue string) string {
-	value, found := os.LookupEnv(key)
-	if found {
-		return value
-	} else {
-		return defaultValue
-	}
+	cfg.cacheTime = parseEnv("CACHE_TIME", time.Hour, func(s string) time.Duration {
+		d, _ := time.ParseDuration(s)
+		return d
+	})
+
+	cfg.allowCacheBypass = parseEnv("ALLOW_CACHE_BYPASS", false, func(s string) bool {
+		matched, _ := regexp.MatchString("true|1|y(es)?", s)
+		return matched
+	})
+
+	cfg.allowCacheClear = parseEnv("ALLOW_CACHE_CLEAR", false, func(s string) bool {
+		matched, _ := regexp.MatchString("true|1|y(es)?", s)
+		return matched
+	})
+
 }
 
 type envParser[T any] func(string) T
@@ -43,4 +58,8 @@ func parseEnv[T any](key string, defaultValue T, parse envParser[T]) T {
 	} else {
 		return defaultValue
 	}
+}
+
+func fetchEnv(key string, defaultValue string) string {
+	return parseEnv(key, defaultValue, func(s string) string { return s })
 }
