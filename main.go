@@ -45,6 +45,12 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if cache bypass is allowed
+	if !conf.allowCacheBypass && q.Get("bypassCache") != "" {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
 	vendor := path[1]
 	addrFamily := path[2]
 	asnOrAsSet := strings.ReplaceAll(strings.ToUpper(path[3]), "_", ":")
@@ -67,8 +73,10 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the prefix list is already cached
 	// If it isn't, look it up using bgpq4 and cache the result
+	// Optional cache bypass
 	output := cache.get(vendor, addrFamily, asnOrAsSet)
-	if output == "" {
+
+	if output == "" || q.Get("bypassCache") == "1" || q.Get("bypassCache") == "true" {
 		output = queryBgpq4(vendor, addrFamily, asnOrAsSet)
 
 		if output == "" {

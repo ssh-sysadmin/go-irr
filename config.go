@@ -8,10 +8,11 @@ import (
 )
 
 type config struct {
-	sources     []string
-	matchParent bool
-	listen      string
-	cacheTime   time.Duration
+	sources          []string
+	matchParent      bool
+	listen           string
+	cacheTime        time.Duration
+	allowCacheBypass bool
 }
 
 func loadConfig(cfg *config) {
@@ -33,6 +34,11 @@ func loadConfig(cfg *config) {
 	cfg.cacheTime = parseEnv("CACHE_TIME", time.Hour, func(s string) time.Duration {
 		d, _ := time.ParseDuration(s)
 		return d
+	})
+
+	cfg.allowCacheBypass = parseEnv("ALLOW_CACHE_BYPASS", false, func(s string) bool {
+		matched, _ := regexp.MatchString("true|1|y(es)?", s)
+		return matched
 	})
 
 }
