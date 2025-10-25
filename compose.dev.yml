@@ -3,9 +3,9 @@ services:
         build: .
         image: ""
         ports:
-            - '8080:8080'
+            - "8080:8080"
         environment:
-            - GIN_MODE=debug
+            - SOURCES=AFRINIC,APNIC,ARIN,LACNIC,RIPE,RPKI
         develop:
             watch:
                 - path: .
