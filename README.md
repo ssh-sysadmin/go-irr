@@ -16,6 +16,7 @@ MATCH_PARENT = If bgpq4 should match parent prefixes, not just the exact route o
 LISTEN = What go-irr should listen to (default [::]:8080)
 CACHE_TIME = How long go-irr should cache prefixes for (default 1 hour)
 ALLOW_CACHE_BYPASS = If the "bypassCache" query parameter is allowed
+ALLOW_CACHE_CLEAR = If global cache is allowed to be cleared with a request to /clearCache
 
 ### Examples:
 

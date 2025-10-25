@@ -20,6 +20,7 @@ func main() {
 	http.HandleFunc("/", handle)
 
 	http.HandleFunc("/health", handleHealthcheck)
+	http.HandleFunc("/clearCache", handleCacheClear)
 
 	// Wrap the default mux with logging middleware so all requests are logged
 	handler := loggingMiddleware(http.DefaultServeMux)
@@ -30,6 +31,17 @@ func main() {
 func handleHealthcheck(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
+}
+
+func handleCacheClear(w http.ResponseWriter, r *http.Request) {
+	if !conf.allowCacheClear {
+		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	cache.init()
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Cache cleared"))
 }
 
 func handle(w http.ResponseWriter, r *http.Request) {

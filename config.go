@@ -13,6 +13,7 @@ type config struct {
 	listen           string
 	cacheTime        time.Duration
 	allowCacheBypass bool
+	allowCacheClear  bool
 }
 
 func loadConfig(cfg *config) {
@@ -37,6 +38,11 @@ func loadConfig(cfg *config) {
 	})
 
 	cfg.allowCacheBypass = parseEnv("ALLOW_CACHE_BYPASS", false, func(s string) bool {
+		matched, _ := regexp.MatchString("true|1|y(es)?", s)
+		return matched
+	})
+
+	cfg.allowCacheClear = parseEnv("ALLOW_CACHE_CLEAR", false, func(s string) bool {
 		matched, _ := regexp.MatchString("true|1|y(es)?", s)
 		return matched
 	})
