@@ -15,9 +15,13 @@ type config struct {
 }
 
 func loadConfig(cfg *config) {
-	cfg.sources = parseEnv("SOURCES", []string{"AFRINIC", "APNIC", "ARIN", "LACNIC", "RIPE"}, func(s string) []string {
-		return strings.Split(strings.ReplaceAll(s, ", ", ","), ",")
-	})
+	cfg.sources = parseEnv("SOURCES",
+		//default - added anything and everything relevant, whittle it down with an envvar if you want less /shruggi
+		[]string{"NTTCOM", "INTERNAL", "LACNIC", "RADB", "RIPE", "RIPE-NONAUTH", "ALTDB", "BELL", "LEVEL3", "APNIC", "JPIRR", "ARIN", "BBOI", "TC", "AFRINIC", "IDNIC", "RPKI", "REGISTROBR", "CANARIE"},
+		//parse custom env
+		func(s string) []string {
+			return strings.Split(strings.ReplaceAll(s, ", ", ","), ",")
+		})
 
 	cfg.matchParent = parseEnv("MATCH_PARENT", true, func(s string) bool {
 		matched, _ := regexp.MatchString("true|1|y(es)?", s)
