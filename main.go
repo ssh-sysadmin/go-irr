@@ -21,7 +21,9 @@ func main() {
 
 	http.HandleFunc("/health", handleHealthcheck)
 
-	log.Fatal(http.ListenAndServe(conf.listen, nil))
+	// Wrap the default mux with logging middleware so all requests are logged
+	handler := loggingMiddleware(http.DefaultServeMux)
+	log.Fatal(http.ListenAndServe(conf.listen, handler))
 
 }
 
